@@ -63,7 +63,7 @@ int main(int argc, char** argv)
     {
         camera_interface = std::make_unique<camera_interface::FileInterface>(
             cfg.source.input_video, cfg.source.video_loop, cfg.source.video_realtime);
-        vehicle_interface = std::make_shared<FileInterface>(cfg.source.input_vehicle_speed);
+        vehicle_interface = std::make_shared<FileInterface>(cfg.source.input_vehicle_speed, cfg.source.video_loop);
     }
     else
     {
