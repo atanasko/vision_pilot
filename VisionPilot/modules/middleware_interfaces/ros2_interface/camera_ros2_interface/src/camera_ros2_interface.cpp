@@ -107,10 +107,8 @@ void CameraRos2Interface::image_callback(
         // Declare that stream starts
         is_stream_started = true;
 
-        latest_stamp_ns =
-            static_cast<int64_t>(msg->header.stamp.sec) * 1000000000LL +
-            static_cast<int64_t>(msg->header.stamp.nanosec);
-        latest_frame = cv_image.clone();
+        // Store latest frame
+        latest_frame = cv_image.clone(); // Clone to ensure independent memory
         has_latest_frame = true;
     }
 };
@@ -152,19 +150,14 @@ std::tuple<bool, cv::Mat> CameraRos2Interface::get_latest_frame()
         return std::make_tuple(false, cv::Mat());
     }
 
+    // Fetch and consume latest frame
     cv::Mat frame = latest_frame.clone();
-    consumed_stamp_ns = latest_stamp_ns;
     has_latest_frame = false;
     latest_frame.release();
 
+    // Frame is valid
     return std::make_tuple(true, frame);
 };
-
-int64_t CameraRos2Interface::last_frame_stamp_ns() const
-{
-    std::lock_guard<std::mutex> lock(frame_mutex);
-    return consumed_stamp_ns;
-}
 
 
 // Frame access helpers
@@ -186,8 +179,6 @@ void CameraRos2Interface::clear_frame_buffer()
     std::lock_guard<std::mutex> lock(frame_mutex);
 
     latest_frame.release();
-    latest_stamp_ns = 0;
-    consumed_stamp_ns = 0;
     has_latest_frame = false;
 
     RCLCPP_INFO(node->get_logger(), "Frame buffer cleared");
