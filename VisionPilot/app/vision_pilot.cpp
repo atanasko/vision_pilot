@@ -157,8 +157,11 @@ int main(int argc, char** argv)
         const double ego_v = vehicle_interface->read();
         VP_INFO("ego_speed=%.2f m/s", ego_v);
 #if ENABLE_RADAR_INTERFACE
-        std::vector<RadarPoint> points = radar_interface->read_points();
-        pipeline.set_radar_points(points);
+        if (cfg.radar_on)
+        {
+            std::vector<RadarPoint> points = radar_interface->read_points();
+            pipeline.set_radar_points(points);
+        }
 #endif
         if (const auto r = pipeline.process(warped, resized,
                                             static_cast<float>(ego_v), true))
