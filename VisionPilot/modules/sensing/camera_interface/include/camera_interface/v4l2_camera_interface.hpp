@@ -9,14 +9,13 @@
 #include <memory>
 #include <iostream>
 #include <camera_interface/camera_interface.hpp>
+#include <common/types.hpp>
 
-namespace camera_interface {
-
-    class V4L2CameraInterface : public CameraInterface {
-
-        public:
-
-
+namespace camera_interface
+{
+    class V4L2CameraInterface : public CameraInterface
+    {
+    public:
         /**
         * @brief Constructor for V4L2Reader
         *
@@ -25,10 +24,10 @@ namespace camera_interface {
         * 
         * Inits the V4L2 camera device with specified parameters and start capture/vis thread.
         * Also logs these details and subscribtion info.
-        */    
+        */
         explicit V4L2CameraInterface(
             const std::string& device_path,
-            uint32_t fps = 10
+            uint32_t fps = 10U
         );
 
 
@@ -37,12 +36,9 @@ namespace camera_interface {
         *
         * Properly cleans up camera resources and closes video capture threads.
         */
-        ~V4L2CameraInterface();
-
+        virtual ~V4L2CameraInterface() override;
 
         // FRAME HANDLINGS
-
-
         /**
         * @brief Get latest captured frame from V4L2 device
         *
@@ -55,8 +51,7 @@ namespace camera_interface {
         *
         * Thread-safe with the frame cloned and removed from buffer after retrieval.
         */
-        std::tuple<bool, cv::Mat> get_latest_frame();
-
+        virtual std::tuple<bool, cv::Mat> get_latest_frame() override;
 
         /**
         * @brief Check if latest frame is currently available
@@ -65,14 +60,12 @@ namespace camera_interface {
         */
         bool has_frames() const;
 
-
         /**
         * @brief Reset frame buffer (clear latest frame slot)
         * 
         * Kinda useful for resetting state or handling error conditions
         */
         void clear_frame_buffer();
-
 
         /**
         * @brief Check if V4L2 camera stream is active
@@ -81,14 +74,12 @@ namespace camera_interface {
         */
         bool is_stream_active() const;
 
-
         /**
         * @brief Check if V4L2 device is properly opened
         * 
         * @return true if VideoCapture is successfully opened, false otherwise
         */
-        bool is_device_open() const;
-
+        virtual bool is_device_open() const override;
 
         /**
         * @brief Get statistics about V4L2 capture operations
@@ -100,55 +91,44 @@ namespace camera_interface {
         *         - current_fps: frames per second
         *         - device_path: V4L2 device being used
         */
-        std::vector<std::string> get_overlay() const;
+        virtual CameraStats get_camera_stats() const override;
 
         /**
         * @brief Reset statistics counters
         */
         void reset_stats();
 
-
     private:
-
-
         // OpenCV VideoCapture with V4L2 backend
         cv::VideoCapture camera_capture;
-
 
         // Single latest-frame slot with thread safety
         mutable std::mutex frame_mutex;
         cv::Mat latest_frame;
         bool has_latest_frame = false;
 
-
         // Flag for started stream
         bool is_stream_started = false;
 
-
         // Device configuration
         std::string device_path;
-        uint32_t target_fps;
-
+        double fps_;
 
         // Display rate throttling
         mutable std::mutex display_time_mutex;
         std::chrono::steady_clock::time_point last_display_time;
-        uint32_t display_frame_period_ms;
-
+        uint32_t frame_period_ms;
 
         // Statistics tracking
         mutable std::mutex stats_mutex;
-        CaptureStats stats;
+        CameraStats stats{};
 
 
         // Logging helper
         void log_info(const std::string& message) const;
         void log_warning(const std::string& message) const;
         void log_error(const std::string& message) const;
-        
-
     };
-
-};  // namespace v4l2_interface
+} // namespace v4l2_interface
 
 #endif //VISIONPILOT_V4L2_TO_OPENCV_HPP
